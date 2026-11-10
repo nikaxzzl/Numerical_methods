@@ -239,13 +239,13 @@ for current_x in num:
     bad  = bad(current_x)
     good  = good(current_x)
     exact = exact(current_x)
-    if ex != 0:
-        error_bad = abs(b - ex) / abs(ex)
+    if exact != 0:
+        error_bad = abs(bad - exact) / abs(exact)
     else:
         error_bad = float('inf')
 
-    if ex != 0:
-        error_good = abs(g - ex) / abs(ex)
+    if exact != 0:
+        error_good = abs(good - exact) / abs(exact)
     else:
         error_good = float('inf')
     print(f"{x:>7.0e} | {bad:>14.8e} | {good:>14.8e} | {error_bad:>10.2e} | {error_good:>10.2e}")
@@ -387,14 +387,14 @@ def exact(val):
 
 res1 = bad1(x)
 res2 = bad2(x)
-exact = float(exact(x))
+exact_val = float(exact(x))
 
-print(f"Результат алгоритма 1: {res1:.20f}")
-print(f"Результат алгоритма 2: {res2:.20f}")
-print(f"Эталон: {exact:.20f}\n")
+print(f"Результат алгоритма 1: {res1}")
+print(f"Результат алгоритма 2: {res2}")
+print(f"Эталон: {exact_val }\n")
 print(f"Алгоритм 1 == Алгоритм 2: {res1 == res2}")
-error_1 = abs(res1 - exact) / exact
-error_2 = abs(res2 - exact) / exact
+error_1 = abs(res1 - exact_val) / exact_val
+error_2 = abs(res2 - exact_val) / exact_val
 
 print(f"Относительная ошибка Алгоритма 1: {error_1:.2%}")
 print(f"Относительная ошибка Алгоритма 2: {error_2:.2%}")
