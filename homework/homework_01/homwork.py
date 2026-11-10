@@ -35,11 +35,19 @@ for number, x, x2 in num:
 
     res.append((number, abs_error, rel_error))
     print(f"{number}:")
-    print(f"  Δx = {abs_error:.8f}")
-    print(f"  δx = {rel_error:.5f}%\n")
+    print(f"Δx: {abs_error:.8f}")
+    print(f"δx: {rel_error:.5f}%\n")
 
-by_abs = sorted(res, key=lambda x: x[1])
-by_rel = sorted(res, key=lambda x: x[2])
+
+def g_absolute_error(item):
+    return item[1]
+
+def g_relative_error(item):
+    return item[2]
+
+
+by_abs = sorted(res, key=g_absolute_error)
+by_rel = sorted(res, key=g_relative_error)
 
 print("Сортировка по абсолютной погрешности:")
 print([r[0] for r in by_abs])
@@ -78,7 +86,6 @@ print("\nВывод:\nинженер ошибся сильнее при изме
 # ZeroDivisionError. Проверьте на четырёх парах из задачи 1.
 print("Задание №3")
 
-
 def relative_error(approx, exact):
     if exact == 0:
         return float('inf')
@@ -90,18 +97,17 @@ print(relative_error(2.718, math.e))
 print(relative_error(9.8, 9.81))
 print(relative_error(0.333, 1/3))
 
-print("\nПроверка деления на ноль:")
-print(relative_error(1, 0))
+print(f"\nПроверка деления на ноль: {relative_error(1, 0)}")
 print("\nВывод:\nфункция возвращает inf при exact=0. На чет. парах ее значения совподают с относительными погрешностями, вычисленными ранее")
 
 # Задача 4. Обратная задача — оценка точного значения.
 # Известно, что приближение x = 47.3 имеет относительную погрешность не более 0.1%. В каком
 # диапазоне лежит x*? Запишите ответ в виде интервала [a, b] с разумным числом значащих цифр.
 print("Задание №4")
-x = 47.3
-eps = 0.001
-a = x/(1+eps)
-b = x/(1-eps)
+approx_value = 47.3
+relative_error = 0.001
+a = x/(1+relative_error)
+b = x/(1-relative_error)
 print(f"точный интервал: [{a}; {b}]")
 print(f"результат с учетом значащих цифр:[{round(a, 2)}; {round(b, 2)}]")
 print("\nВывод:\nЗначение x* находится в интервале [47.2527, 47.3473]. Итоговый результат округляем до сотых: [47.25, 47.35]. Больше знаков указывать нельзя, так как это создает ложную точность (исходное число имеет точность только до десятых), а меньше — приведет к потере информации о границах погрешности.")
@@ -112,20 +118,18 @@ print("\nВывод:\nЗначение x* находится в интервал
 # 0.3)? Решите неравенство |T| · 0.005 ≤ 0.3 и объясните, почему выбор датчика зависит от
 # диапазона измерений.
 print("Задание №5")
-delta_A = 0.3
-delta_B = 0.005
-T = delta_A/delta_B
-
-# Добавляем строчку, которая показывает явное решение неравенства
+max_abs_error_A = 0.3
+max_abs_error_B = 0.005
+T = max_abs_error_A/max_abs_error_B
 print(f"Решение неравенства: |T| <= {T} °C") 
 
 for t in  [-100, -50, -10, 10, 50, 100]:
-    B = abs(t) * delta_B
-    if B <= delta_A:
-        who = "B"
+    B = abs(t) * max_abs_error_B
+    if B <= max_abs_error_A:
+        str_who = "B"
     else:
-        who = "A"
-    print(f"T = {t:>4} °C: Δ_B = {B:.2f} °C -> точнее {who}")
+        str_who = "A"
+    print(f"T = {t:>4} °C: Δ_B = {B:.2f} °C -> точнее {str_who}")
 print("\nВывод:\nдатчик В точнее при |T| ≤ 60 С. При маленьких  |T| относительная ошибка B даёт малую абсолютную ошибку , поэтому B точнее A. При |T| > 60 С абсолютная ошибка B превышает 0.3 С , следовательно,выбор датчика зависит от диапазона измерений: A — для большого диапазона, B — для маленького. ")
 
 # Блок 2. Значащие цифры и округление (задачи 6–9)
@@ -141,9 +145,9 @@ num = [
     ("0.03050",  4),
     ("250000",   2)
 ]
-for s, sig in num:
+for num_str, sig in num:
     form = f"{float(s):.{sig-1}e}"
-    print(f"{s}: значащих: {sig}, форма: {form}")
+    print(f"{num_str}: значащих: {sig}, форма: {form}")
 print("\nВывод:\nПроблема у чисел с нулями без запятой (1200 и 250000). Она в том, что непонятно, являются ли они значащими или нет. Экспоненциальная форма всё проясняет. У остальных чисел есть запятая, поэтому число значащих цифр понятно.")
 
 # Задача 7. Честная запись результата.
@@ -153,9 +157,10 @@ print("\nВывод:\nПроблема у чисел с нулями без за
 # неверно в записи 4.738291 ± 0.02
 print("Задание №7")
 
-x = 4.738291
-dx = 0.02
-print(f"x = {round(x, 2)} ± {dx}  =>  4.74 ± 0.02")
+measured_value = 4.738291
+absolute_error = 0.02
+print(f"x: {round(x, 2)} ± {absolute_error}  =>  4.74 ± 0.02")
+
 print("\nВывод:\n погрешность Δ = 0.02 относится к сотым, поэтому  последняя верная цифра результата тоже должна быть  сотой: 4.74 ± 0.02. Осталось только 3 значащих цифр. 4.738291 ± 0.02  это не правильно, так как  она заявляет точность до 1e-6, тогда как реальная точность — 0.02 (сотые). Это ложная точность, то есть вводящая в заблуждение информация о качестве измерения   ")
 
 # Задача 8. Округление и banker's rounding.
@@ -173,15 +178,15 @@ print("«.5 вверх»:", [math.floor(v + 0.5) for v in val])
 
 n = 1_000_000
 
-shift = 0
+sdvig = 0
 for i in range(n):
     k = i % 10
     v = k + 0.5
-    up = math.floor(v + 0.5)      # «.5 вверх» = k+1
-    bank = round(v)                # banker's: чётное
-    shift += up - bank
+    up = math.floor(v + 0.5)   
+    bank = round(v)                
+    sdvig += up - bank
 
-print(f"сдвиг «вверх» vs banker на {n}: {shift} ({shift/n}/число)")
+print(f"сдвиг «вверх» vs banker на {n}: {sdvig} ({sdvig/n}/число)")
 
 print("«.5 вверх»:", [int(v + 0.5) if v > 0 else int(v - 0.5) for v in val])
 print("\nВывод:\nкоманда round() округляет половину к чктному числу. Отличие от «школьного» правила «0.5 всегда вверх», тем, что выводились бы числа не только четные. Массив из 10^6 чисел  лучайных k+0.5 (k=0..9)   сдвигается на вверх   + 0.5 => сумма уедет ~5e5. В финансах это важно, так как приводит к огромным ошибкам сумм")
@@ -213,15 +218,15 @@ print(f"S_float: {s_float}\nΔ: {absolute_error(s_float, s_ref)}\n err: {rel_err
 print(f"S_round: {s_round}\nΔ: {absolute_error(s_round, s_ref)}\n err: {rel_err(s_round, s_ref)}")
 print(f"S_ref: {s_ref}")
 
-err_a = absolute_error(s_float, s_ref)
-err_b = absolute_error(s_round, s_ref)
+error_a = absolute_error(s_float, s_ref)
+error_b = absolute_error(s_round, s_ref)
 
-if err_a == 0:
+if error_a == 0:
     print("\nошибка (б) больше ошибки (а) в бесконечно много раз (ошибка 'а' равна 0)")
 else:
-    rat = err_b / err_a
+    ratio = error_b / error_a
     
-    print(f"\nошибка (б) больше ошибки (а) в {rat:.2f} раз") 
+    print(f"\nошибка (б) больше ошибки (а) в {ratio:.2f} раз") 
 
 print("\nВывод:\nбез промежуточных округлений вариант (а). Ошибка будет маленькой - порядка машинной точности. Если округлить каждое слагаемое до трех знаков варант (б), Ошибка становится больше. Правило: округлять нужно только итоговый результат, а промежуточные вычисления делать с максимальной точностью")
 
@@ -233,7 +238,6 @@ print("\nВывод:\nбез промежуточных округлений в�
 print("Задание №10")
 def absolute_error(approx, exact):
     return abs(approx - exact)
-
 summ = 0.1+0.2
 print(f"== 0.3: {summ == 0.3}; isclose: {math.isclose(summ, 0.3)}")
 print(f"Δ={absolute_error(summ,0.3)}, δ={rel_err(summ,0.3)}")
@@ -256,26 +260,22 @@ def rel_err(a, e):
             return float('inf')
         return 0.0
     return abs(a - e) / abs(e)
-
 a = 1 +1e-15
 b = 1.0
 print(f"a-b: {a-b}\nδ={rel_err(a-b,1e-15)}")
-
-a2 = 1.0
-b2 = 1e8
+a_2 = 1.0
+b_2 = 1e8
 c = 1.0
-disc = math.sqrt(b2*b2 - 4*a2*c)
-
-bad  = (-b2 + disc) / (2*a2)
-good = (2*c) / (-b2 - disc)
+disc = math.sqrt(b_2*b_2 - 4*a_2*c)
+bad  = (-b_2 + disc) / (2*a_2)
+good = (2*c) / (-b_2 - disc)
 ma = mpmath.mpf(1.0)
 mb = mpmath.mpf(10**8)
 mc = mpmath.mpf(1.0)
 exact = float((-mb + mpmath.sqrt(mb**2 - 4*ma*mc)) / (2*ma))
 
 print(f"меньший корень:\nплохо: {bad}\nхорошо: {good}\nэталон: {exact}")
-print(f"err плохо: {rel_err(bad, exact)}\nerr хорошо: {rel_err(good, exact)}")
-
+print(f"error плохо: {rel_err(bad, exact)}\nerr хорошо: {rel_err(good, exact)}")
 print("\nВывод:\nпри вычитании близких чисел в стандартном float теряется часть значащих цифр, возникает большая погрешность. Благодаря новой формуле этого можно избежать. Точность хорошего метода оказывается почти отличной по сравнению с плохим. ")
 
 # Задача 12. Накопление в цикле — сравнение стратегий.
@@ -290,7 +290,7 @@ print("\nВывод:\nпри вычитании близких чисел в с�
 # Сравните с эталоном 1e5. Для каждого способа посчитайте абсолютную и относительную
 # погрешность. Постройте таблицу и сделайте вывод: какой способ и во сколько раз точнее.
 print("Задание №12")
-arr = [0.1] *1_000_000
+arr = [0.1]*1_000_000
 ref = 1e5
 
 
@@ -302,15 +302,14 @@ def relative_error_percent(approx, exact):
         return float('inf')
     return abs(approx - exact) / abs(exact) * 100
 
-
-t1 = 0.0
+t_1 = 0.0
 for x in arr:
-    t1 += x
-t2 = sum(arr)
-t3 = math.fsum(arr)
+    t_1 += x
+t_2 = sum(arr)
+t_3 = math.fsum(arr)
 
 print(f"{'метод'} | {'результат'} | {'Δ'} | {'δ'}")
-for name, val in [("naive", t1), ("sum", t2), ("fsum", t3)]:
+for name, val in [("naive", t_1), ("sum", t_2), ("fsum", t_3)]:
     print(f"{name} | {val} | {absolute_error(val, ref)} | {relative_error_percent(val, ref)}")
 print("\nВывод:\nнаиболее точен math.fsum:его погрешность нулевая.Наивный цикл и sum показывают одинаковую ошибку из-за накопления округлений промежуточных сумм во float. По сравнению с ними math.fsum точнее в много раз")
 
@@ -334,9 +333,7 @@ def relative_error_percent(approx, exact):
 
 small = [1e-10] * 500_000
 big = [1e6] * 500_000
-
 mix = small + big   
-
 s_small_first =0.0
 for i in mix:
     s_small_first += i
@@ -377,13 +374,13 @@ for i in range(1, 10001):
     for thr in threshold_values:
         if threshold_values[thr] is None and a >thr:
             threshold_values[thr] = i
-for t, step in threshold_values.items():
-          print(f"  {t}: {step if step is not None else 'не достигнут за 10000 шагов'}")
+for x, step in threshold_values.items():
+          print(f"  {x}: {step if step is not None else 'не достигнут за 10000 шагов'}")
 
 final_exact = math.exp(10000 * math.log(1.0001))
 print(f"\nx после 10000 шагов: {x}")
-print(f"эталон:              {final_exact}")
-print(f"δ на шаге 10000:     {relative_error_percent(x, final_exact)}")
+print(f"эталон: {final_exact}")
+print(f"δ на шаге 10000: {relative_error_percent(x, final_exact)}")
 print("\nВывод:\nпри частом умножении x *= 1.0001 ошибка увеличивается примерно линейно с числом шагов, каждое умножение добавляет примерно 2.2e-16 к относительной погрешности. Все эти добавления складываются. За 10000 шагов накопленная δ ≈ 10^-14, поэтому пороги 10^-9, 10^-6 и 10^-3 не достигаются. Ошибка растет медленно.")
 
 # Задача 15. Финансы: float vs Decimal.
@@ -410,11 +407,11 @@ def relative_error_percent(approx, exact):
     return abs(approx - exact) / abs(exact) * 100
 
 a_float = 0.0
-for i in range(n):
+for _ in range(n):
     a_float += 0.01
 
 a_dec = Decimal("0")
-for i in range(n):
+for _ in range(n):
     a_dec += Decimal("0.01")
 
 a_kop = 0
@@ -422,7 +419,7 @@ for i in range(n):
     a_kop += 1
 print(f"float:   {a_float}")
 print(f"Decimal: {a_dec}")
-print(f"копейки: {a_kop} коп = {a_kop/100} руб\n")
+print(f"копейки: {a_kop} коп: {a_kop/100} руб\n")
 print(f"float vs Decimal: Δ={absolute_error(a_float, float(a_dec)):.3e} руб  "
       f"δ={relative_error_percent(a_float, float(a_dec)):.2e}")
 print(f"float vs копейки: Δ={absolute_error(a_float, a_kop/100):.3e} руб  "
@@ -444,8 +441,8 @@ print("Задание №16")
 random.seed(0)
 arr = [random.random() for i in range(100_000)]
 s_loop = 0.0
-for v in arr: 
-    s_loop += v
+for i in arr: 
+    s_loop += i
 s_sum = sum(arr)
 s_fsum = math.fsum(arr)
 s_np = np.mean(arr) * len(arr)
