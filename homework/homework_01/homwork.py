@@ -106,8 +106,8 @@ print("\nВывод:\nфункция возвращает inf при exact=0. Н
 print("Задание №4")
 approx_value = 47.3
 relative_error = 0.001
-a = x/(1+relative_error)
-b = x/(1-relative_error)
+a = approx_value / (1 + relative_error)
+b = approx_value / (1 - relative_error)
 print(f"точный интервал: [{a}; {b}]")
 print(f"результат с учетом значащих цифр:[{round(a, 2)}; {round(b, 2)}]")
 print("\nВывод:\nЗначение x* находится в интервале [47.2527, 47.3473]. Итоговый результат округляем до сотых: [47.25, 47.35]. Больше знаков указывать нельзя, так как это создает ложную точность (исходное число имеет точность только до десятых), а меньше — приведет к потере информации о границах погрешности.")
@@ -146,7 +146,7 @@ num = [
     ("250000",   2)
 ]
 for num_str, sig in num:
-    form = f"{float(s):.{sig-1}e}"
+    form = f"{float(num_str):.{sig-1}e}"
     print(f"{num_str}: значащих: {sig}, форма: {form}")
 print("\nВывод:\nПроблема у чисел с нулями без запятой (1200 и 250000). Она в том, что непонятно, являются ли они значащими или нет. Экспоненциальная форма всё проясняет. У остальных чисел есть запятая, поэтому число значащих цифр понятно.")
 
@@ -159,7 +159,7 @@ print("Задание №7")
 
 measured_value = 4.738291
 absolute_error = 0.02
-print(f"x: {round(x, 2)} ± {absolute_error}  =>  4.74 ± 0.02")
+print(f"x: {round(measured_value, 2)} ± {absolute_error}  =>  4.74 ± 0.02")
 
 print("\nВывод:\n погрешность Δ = 0.02 относится к сотым, поэтому  последняя верная цифра результата тоже должна быть  сотой: 4.74 ± 0.02. Осталось только 3 значащих цифр. 4.738291 ± 0.02  это не правильно, так как  она заявляет точность до 1e-6, тогда как реальная точность — 0.02 (сотые). Это ложная точность, то есть вводящая в заблуждение информация о качестве измерения   ")
 
@@ -374,8 +374,8 @@ for i in range(1, 10001):
     for thr in threshold_values:
         if threshold_values[thr] is None and a >thr:
             threshold_values[thr] = i
-for x, step in threshold_values.items():
-          print(f"  {x}: {step if step is not None else 'не достигнут за 10000 шагов'}")
+for thr_key, step in threshold_values.items():
+          print(f"  {thr_key}: {step if step is not None else 'не достигнут за 10000 шагов'}")
 
 final_exact = math.exp(10000 * math.log(1.0001))
 print(f"\nx после 10000 шагов: {x}")
@@ -445,7 +445,7 @@ for i in arr:
     s_loop += i
 s_sum = sum(arr)
 s_fsum = math.fsum(arr)
-s_np = np.mean(arr) * len(arr)
+s_np = np.mean(np.array(arr)) * len(arr)
 ref = s_fsum
 eps = 2.2e-16
 for name, m in [("Цикл (loop) ", s_loop), 
