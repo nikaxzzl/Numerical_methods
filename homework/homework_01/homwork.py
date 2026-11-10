@@ -272,10 +272,9 @@ good = (2*c) / (-b_2 - disc)
 ma = mpmath.mpf(1.0)
 mb = mpmath.mpf(10**8)
 mc = mpmath.mpf(1.0)
-exact = float((-mb + mpmath.sqrt(mb**2 - 4*ma*mc)) / (2*ma))
-
-print(f"меньший корень:\nплохо: {bad}\nхорошо: {good}\nэталон: {exact}")
-print(f"error плохо: {rel_err(bad, exact)}\nerr хорошо: {rel_err(good, exact)}")
+exact = (-mb + mpmath.sqrt(mb**2 - 4*ma*mc)) / (2*ma)
+print(f"error плохо: {float(rel_err(mpmath.mpf(str(bad)), exact))}")
+print(f"err хорошо:  {float(rel_err(mpmath.mpf(str(good)), exact))}")
 print("\nВывод:\nпри вычитании близких чисел в стандартном float теряется часть значащих цифр, возникает большая погрешность. Благодаря новой формуле этого можно избежать. Точность хорошего метода оказывается почти отличной по сравнению с плохим. ")
 
 # Задача 12. Накопление в цикле — сравнение стратегий.
