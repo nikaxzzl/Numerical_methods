@@ -236,9 +236,11 @@ num = [1e-2, 1e-8, 1e-12, 1e-16]
 print(f"{'x':>7} | {'bad':>14} | {'good':>14} | {'error_bad':>10} | {'error_good':>10}")
 
 for current_x in num:
-    bad  = bad(current_x)
-    good  = good(current_x)
-    exact = exact(current_x)
+    res_bad = bad(current_x)
+    res_good = good(current_x)
+    res_exact = exact(current_x)
+    
+    error_bad = abs(res_bad - res_exact) / abs(res_exact)
     if exact != 0:
         error_bad = abs(bad - exact) / abs(exact)
     else:
@@ -551,8 +553,9 @@ for i in num_range:
     res_good = good_algorithm(i)
     res_exact = exact_reference(i)
 
-    error_bad = float(abs(Decimal(str(res_bad))-res_exact)/abs(res_exact))
-    err0r_good = float(abs(Decimal(str(res_good))-res_exact)/abs(res_exact))
-    
-    print(f"{x} | {res_bad} | {res_good} | {float(res_exact)} | {error_bad} | {error_good}")
+    error_bad = float(abs(Decimal(str(res_bad)) - res_exact) / abs(res_exact))
+    error_good = float(abs(Decimal(str(res_good)) - res_exact) / abs(res_exact))
+
+    print(f"{i:>7.0e} | {res_bad:<12.5e} | {res_good:<12.5e} | {float(res_exact):<12.5e} | {error_bad:<11.2e} | {error_good:.2e}")
+
 print("\nВывод:\n1.  Когда число 𝑥 становится очень большим (больше 10¹⁴), значения sqrt(x+1) и sqrt(x) настолько близки друг к другу, что компьютер начинает воспринимать их как одно и то же число. Если вычесть одно из другого, значащие цифры просто «стираются», и в результате получается неверный ответ. Это явление называется «потерей значимости при вычитании» (subtractive cancellation).\n2  Когда обычный способ перестаёт работать.\n- х<=10⁸ -результат ещё можно считать приемлемым (погрешность не превышает. 10^-8).\n- При 10¹⁴: ошибка становится огромной — около 11%.\n- При 10¹⁶: алгоритм полностью ломается и выдаёт 0 вместо правильного ответа, то есть ошибка составляет 100%.\n3. Достижимая точность: Если использовать улучшенную формулу (умножить и разделить на сопряжённое выражение), проблема исчезает. Вместо вычитания похожих чисел появляется сложение, которое не портит точность.\nТакой метод работает идеально на любых числах и сохраняет максимальную точность, возможную на компьютере")
