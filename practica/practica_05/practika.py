@@ -50,60 +50,60 @@ plt.tight_layout()
 plt.show()
 
 # #2
-# print("Задание №2")
-# sizes = [100_000, 1_000_000]
+print("Задание №2")
+sizes = [100_000, 1_000_000]
 
-# approaches = {
-#     "Цикл с append": "squares = []\nfor num in range(N):\n    squares.append(num * num)",
-#     "List comprehension": "squares = [num * num for num in range(N)]",
-#     "map + lambda": "squares = list(map(lambda num: num * num, range(N)))",
-# }
+approaches = {
+    "Цикл с append": "squares = []\nfor num in range(N):\n    squares.append(num * num)",
+    "List comprehension": "squares = [num * num for num in range(N)]",
+    "map + lambda": "squares = list(map(lambda num: num * num, range(N)))",
+}
 
-# execution_times_ms = {label: [] for label in approaches}
-# peak_memory_mb = {label: [] for label in approaches}
+execution_times_ms = {label: [] for label in approaches}
+peak_memory_mb = {label: [] for label in approaches}
 
-# for count in sizes:
-#     for label, code_snippet in approaches.items():
-#         # Замер времени (мс)
-#         raw_times = timeit.repeat(code_snippet, globals={"N": count}, number=1, repeat=5)
-#         execution_times_ms[label].append(min(raw_times) * 1000)
+for count in sizes:
+    for label, code_snippet in approaches.items():
+        # Замер времени (мс)
+        raw_times = timeit.repeat(code_snippet, globals={"N": count}, number=1, repeat=5)
+        execution_times_ms[label].append(min(raw_times) * 1000)
 
-#         # Замер пиковой памяти (МБ)
-#         tracemalloc.start()
-#         exec(code_snippet, {"N": count})
-#         current_bytes, peak_bytes = tracemalloc.get_traced_memory()
-#         tracemalloc.stop()
-#         peak_memory_mb[label].append(peak_bytes / (1024 * 1024))
+        # Замер пиковой памяти (МБ)
+        tracemalloc.start()
+        exec(code_snippet, {"N": count})
+        current_bytes, peak_bytes = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+        peak_memory_mb[label].append(peak_bytes / (1024 * 1024))
 
-# # Два графика рядом
-# figure, (time_ax, memory_ax) = plt.subplots(1, 2, figsize=(13, 5))
+# Два графика рядом
+figure, (time_ax, memory_ax) = plt.subplots(1, 2, figsize=(13, 5))
 
-# # График времени: линии с маркерами
-# for label in approaches:
-#     time_ax.plot(sizes, execution_times_ms[label], "o-", label=label)
+# График времени: линии с маркерами
+for label in approaches:
+    time_ax.plot(sizes, execution_times_ms[label], "o-", label=label)
 
-# time_ax.set_xlabel("N")
-# time_ax.set_ylabel("Время (мс)")
-# time_ax.set_title("Время выполнения")
-# time_ax.legend()
-# time_ax.grid(True, alpha=0.3)
+time_ax.set_xlabel("N")
+time_ax.set_ylabel("Время (мс)")
+time_ax.set_title("Время выполнения")
+time_ax.legend()
+time_ax.grid(True, alpha=0.3)
 
-# # График памяти: столбцы
-# bar_positions = range(len(sizes))
-# bar_width = 0.25
+# График памяти: столбцы
+bar_positions = range(len(sizes))
+bar_width = 0.25
 
-# for idx, label in enumerate(approaches):
-#     shifted_positions = [pos + (idx - 1) * bar_width for pos in bar_positions]
-#     memory_ax.bar(shifted_positions, peak_memory_mb[label], bar_width, label=label)
+for idx, label in enumerate(approaches):
+    shifted_positions = [pos + (idx - 1) * bar_width for pos in bar_positions]
+    memory_ax.bar(shifted_positions, peak_memory_mb[label], bar_width, label=label)
 
-# memory_ax.set_xlabel("N")
-# memory_ax.set_ylabel("Пиковая память (МБ)")
-# memory_ax.set_title("Потребление памяти")
-# memory_ax.set_xticks(list(bar_positions))
-# memory_ax.set_xticklabels([f"N={count}" for count in sizes])
-# memory_ax.legend()
-# memory_ax.grid(True, axis="y", alpha=0.3)
+memory_ax.set_xlabel("N")
+memory_ax.set_ylabel("Пиковая память (МБ)")
+memory_ax.set_title("Потребление памяти")
+memory_ax.set_xticks(list(bar_positions))
+memory_ax.set_xticklabels([f"N={count}" for count in sizes])
+memory_ax.legend()
+memory_ax.grid(True, axis="y", alpha=0.3)
 
-# plt.tight_layout()
-# plt.show()
-# print("Вывод: По памяти все три варианта почти одинаковы, получается один и тот же список из N чисел. Быстрее всего list comprehension, он работает на уровне C и обходится без append. map + lambda медленнее , потому что lambda вызывается для каждого элемента.")
+plt.tight_layout()
+plt.show()
+print("Вывод: По памяти все три варианта почти одинаковы, получается один и тот же список из N чисел. Быстрее всего list comprehension, он работает на уровне C и обходится без append. map + lambda медленнее , потому что lambda вызывается для каждого элемента.")
