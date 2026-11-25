@@ -9,7 +9,14 @@
 # Вывод: расположите задачи по возрастанию обусловленности. Какая из них самая «опасная» и
 # почему? -->
 import math
+import random
+import sys
+from decimal import Decimal, getcontext
+
+import matplotlib.pyplot as plt
 import mpmath
+import numpy as np
+
 print("Задание №1")
 
 point_sqrt = 1e-8
@@ -21,7 +28,7 @@ cond_sqrt = 0.5
 cond_ln = abs(1 / math.log(point_ln))
 cond_sub = abs(point_sub / (point_sub - 1))
 cond_sin = abs(point_sin * (math.cos(point_sin) / math.sin(point_sin)))
-print(f"1. sqrt(x)  при x:{point_sqrt}: cond{cond_sqrt:.1f}")
+print(f"1. sqrt(x)  при x:{point_sqrt}: cond: {cond_sqrt:.1f}")
 print(f"2. ln(x)    при x:{point_ln}: cond: {cond_ln:.1f}")
 print(f"3. x - 1    при x:{point_sub}: cond: {cond_sub:.1f}")
 print(f"4. sin(x)   при x: {point_sin} cond: {cond_sin:.1f}")
@@ -32,6 +39,8 @@ print("\nВывод:\nsin(x) [0.0] -> sqrt[0.5] -> ln[1000.5] -> x-1 [1000001.0]
 # b велико. Затем проверьте численно: возьмите a = 1 + 10−8, b = 1 и посчитайте Δf / δa при δa =
 # 10−9. Совпадает ли фактическое изменение результата с предсказанием по cond? Объясните в 2–3
 # предложениях.
+# Аналитически: cond_a = |a * (df/da) / f| = |a / (a - b)|, cond_b = |b * (df/db) / f| = |b / (a - b)|.
+# При a ≈ b знаменатель |a - b| -> 0, поэтому cond_a -> ∞ и cond_b -> ∞.
 print("Задание №2")
 a = 1 + 10**-8
 b = 1
@@ -58,7 +67,7 @@ print("\nВывод:\nда, так как результат изменился 
 # корень относительно x = 1. Постройте таблицу: ε → сдвиг корня → отношение сдвигов. Сделайте
 # вывод о связи кратности корня и обусловленности.
 print("Задание №3")
-print(f"{'eps'} | {'Сдвиг корня'}    | {'Отношение сдвигов'}.      ")
+print(f"{'eps'} | {'Корень'} | {'Сдвиг корня'} | {'Отношение сдвигов'}")
 epsilon_list = [1e-2, 1e-4, 1e-6]
 
 prev_shift = None 
@@ -120,9 +129,8 @@ print("\nВывод:\nв задаче нет проблем. Ответ стре
 # плохого → ошибка хорошего. Сделайте вывод: при каком b «плохой» способ начинает
 # катастрофически ошибаться?
 print("Задание №5")
-from decimal import Decimal, getcontext
 print(f"{'b':<7} | {'Ошибка плохого':^22} | {'Ошибка хорошего':^22}")
-getcontext().prec = 50
+getcontext().prec = 60
 for stepen in range(4, 13, 4):
     b = 10**stepen
     a = 1.0
@@ -135,38 +143,47 @@ for stepen in range(4, 13, 4):
     a_dec = Decimal(str(a))
     c_dec = Decimal(str(c))
 
-    discrimenant_dec = (b_dec**2-Decimal("4") * a_dec * c_dec).sqrt()
+    discrimenant_dec = (b_dec**2-Decimal(4) * a_dec * c_dec).sqrt()
     exact = (2 * c_dec) / (-b_dec - discrimenant_dec)
     error_bad = float(abs(Decimal(str(x2_bad)) - exact)/abs(exact))
     error_good = float(abs(Decimal(str(x2_good)) - exact)/abs(exact))
     print(f"10^{stepen:<4} | {error_bad:<22.4e} | {error_good:<22.4e}")
 print("\nВывод:\nПлохой способ ошибочный при b = 10^8 (относительная ошибка достигает 100%), из-за катастрофического сокращения разрядов b^2 = 10^16 из-за него полностью пропадает 4ас, ведь float64 держит только ~15 значащих цифр. Компьютер округляет дискриминант до b и корень просто пропадает ")
 
-# Задача 6. (1 − cos x) при малых x.
-# Реализуйте два способа вычисления f(x) = (1 − cos x) / x²:
-# «плохо»: прямо в лоб;
-# «хорошо»: через тождество 2·sin²(x/2) / x².
-# Прогоните x = 10−2, 10−4, 10−6, 10−8, 10−10. Эталон — через mpmath. Постройте таблицу
-# относительной ошибки обоих способов от x в log-log масштабе. Определите, при каком x ошибка
-# «плохого» способа превышает 1%. Сформулируйте правило, когда нужно искать
-# тригонометрическое тождество.
+# # Задача 6. (1 − cos x) при малых x.
+# # Реализуйте два способа вычисления f(x) = (1 − cos x) / x²:
+# # «плохо»: прямо в лоб;
+# # «хорошо»: через тождество 2·sin²(x/2) / x².
+# # Прогоните x = 10−2, 10−4, 10−6, 10−8, 10−10. Эталон — через mpmath. Постройте таблицу
+# # относительной ошибки обоих способов от x в log-log масштабе. Определите, при каком x ошибка
+# # «плохого» способа превышает 1%. Сформулируйте правило, когда нужно искать
+# # тригонометрическое тождество.
 print("Задание №6")
 print(f"{'x':<7} | {'Ошибка плохого':^22} | {'Ошибка хорошего':^22}")
 getcontext().prec = 50
+xs_6 = []
+errs_bad_6 = []
+errs_good_6 = []
+mpmath.mp.dps = 50
 for stepen in range(2, 11, 2):
     x = 10**(-stepen)
 
     bad = (1.0 - math.cos(x)) / (x**2)
     good = (2.0 * (math.sin(x / 2.0)**2)) / (x**2)
 
-    x_dec = Decimal(str(x))
-    exact = (Decimal('1') - x_dec.cos()) / (x_dec**2)
-
-    error_bad = float(abs(Decimal(bad) - exact) / abs(exact))
+    x_mp = mpmath.mpf(f"1e-{stepen}")
+    exact = (1 - mpmath.cos(x_mp)) / (x_mp**2)
     error_good = float(abs(Decimal(good) - exact) / abs(exact))
+
+
+    xs_6.append(x)
+    errs_bad_6.append(error_bad)
+    errs_good_6.append(error_good)
 
     str_x = f"10^-{stepen}"
     print(f"{str_x:<7} | {error_bad:<22.4e} | {error_good:<22.4e}")
+
+
 print("\nВывод:\nпри плохом способе ошибка превышает 1%(х=10^-8), а при х = 10^-10 корень  пропадает из-за вычитания близких чисел. Правило: тригонометрическое тождество надо искать , когда х стремится к 0 возникает  вычитание близких по величине чисел, приводящее к катастрофической потере разрядов")
 
 # Задача 7. √(x+1) − √x при больших x.
@@ -185,14 +202,15 @@ def bad(x):
 
 
 def exact(x):
-    mp_x = mpmath.mpf(x)
-    return float(mpmath.sqrt(mp_x + 1) - mpmath.sqrt(mp_x))
+    mp_x = mpmath.mpf(str(x))
+    return mpmath.sqrt(mp_x + 1) - mpmath.sqrt(mp_x)
 
 
 def good(x):
     return 1 / (math.sqrt(x + 1) + math.sqrt(x))
 
 xs = [1e4, 1e8, 1e12, 1e14, 1e16]
+errs_7 = []
 print(f"{'x':>7} | {'bad':>14} | {'good':>14} | {'err_bad':>10} | {'err_good':>10}")
 
 for x in xs:
@@ -201,15 +219,19 @@ for x in xs:
     ex = exact(x)
 
     if ex != 0:
-        error_bad = abs(b - ex) / abs(ex)
+        error_bad = float(abs(mpmath.mpf(str(b)) - ex) / abs(ex))
     else:
         error_bad = float('inf')
 
     if ex != 0:
-        error_good = abs(g - ex) / abs(ex)
+        error_good = float(abs(mpmath.mpf(str(g)) - ex) / abs(ex))
     else:
         error_good = float('inf')
+    errs_7.append(error_bad)
     print(f"{x:>7.0e} | {b:>14.8e} | {g:>14.8e} | {error_bad:>10.2e} | {error_good:>10.2e}")
+
+slope_7 = math.log10(errs_7[2] / errs_7[0]) / math.log10(xs[2] / xs[0])
+print(f"Оценка показателя степени роста ошибки: p ≈ {slope_7:.2f}")
 print("\nВывод:\nошибка растет вместе с х (x > 10^4 => ошибка > 10^4). При х=10^16 float округляет до 0. Причина: плохой алгоритм вычитает близкие числа, из-за этого значащие цифры теряются. Хороший способ — тождественное преобразование: за счет вычитания сложение, зато точно сохранится")
 
 # Задача 8. Экспонента и логарифм.
@@ -222,50 +244,49 @@ print("\nВывод:\nошибка растет вместе с х (x > 10^4 => 
 # библиотеке есть «странные» функции типа log1p, expm1, hypot.
 print("Задание №8")
 
-def bad(x):
+def bad_8(x):
     return math.log(1 + x)
 
-def good(x):
+def good_8(x):
     return math.log1p(x)
 
-def exact(x):
+def exact_8(x):
     mp_x = mpmath.mpf(str(x))
-    return float(mpmath.log(1+mpmath.mpf(x)))
+    return mpmath.log(1 + mp_x)
 
 num = [1e-2, 1e-8, 1e-12, 1e-16]
 print(f"{'x':>7} | {'bad':>14} | {'good':>14} | {'error_bad':>10} | {'error_good':>10}")
 
 for current_x in num:
-    res_bad = bad(current_x)
-    res_good = good(current_x)
-    res_exact = exact(current_x)
+    res_bad = bad_8(current_x)
+    res_good = good_8(current_x)
+    res_exact = exact_8(current_x)
     
-    error_bad = abs(res_bad - res_exact) / abs(res_exact)
-    if exact != 0:
-        error_bad = abs(bad - exact) / abs(exact)
+    if res_exact != 0:
+        error_bad = float(abs(mpmath.mpf(str(res_bad)) - res_exact) / abs(res_exact))
     else:
         error_bad = float('inf')
 
-    if exact != 0:
-        error_good = abs(good - exact) / abs(exact)
+    if res_exact != 0:
+        error_good = float(abs(mpmath.mpf(str(res_good)) - res_exact) / abs(res_exact))
     else:
         error_good = float('inf')
-    print(f"{x:>7.0e} | {bad:>14.8e} | {good:>14.8e} | {error_bad:>10.2e} | {error_good:>10.2e}")
+    print(f"{current_x:>7.0e} | {res_bad:>14.8e} | {res_good:>14.8e} | {error_bad:>10.2e} | {error_good:>10.2e}")
 print("\nВывод:\n При х = 10^-16 способ bad выведет ошибку, так как float округляет 1 + x до 1, поэтому мелкий х полностью стирается. Способ good (log1p) сохраняет полную точность. Причина: log1p принимает чистый х и считает логарифм по ряду (не прибавляя единицу), поэтому значащие цифры не теряются при округлении. Функции log1p, expm1 и hypot есть в стандартной библиотеке, они нужны, чтобы защитить от ошибок округления на очень маленьких или больших числах, где формулы могут сломаться.")
 
-# Задача 9. Неустойчивость накопления в сумме.
-# Вычислите Sₙ = Σ (k = 1..n) 1/k для n = 105, 106, 107 тремя способами:
-# 1. наивный цикл слева направо;
-# 2. sum(arr);
-# 3. math.fsum(arr).
-# Эталон — mpmath с 50 знаками. Для каждого n посчитайте относительную ошибку всех трёх
-# способов. Постройте таблицу ошибки от n в log-log. Оцените, как растёт ошибка наивного
-# способа с n. Сделайте вывод: при каком n наивная сумма становится неприемлемой (ошибка >
-# 10−10)?
+# # Задача 9. Неустойчивость накопления в сумме.
+# # Вычислите Sₙ = Σ (k = 1..n) 1/k для n = 105, 106, 107 тремя способами:
+# # 1. наивный цикл слева направо;
+# # 2. sum(arr);
+# # 3. math.fsum(arr).
+# # Эталон — mpmath с 50 знаками. Для каждого n посчитайте относительную ошибку всех трёх
+# # способов. Постройте таблицу ошибки от n в log-log. Оцените, как растёт ошибка наивного
+# # способа с n. Сделайте вывод: при каком n наивная сумма становится неприемлемой (ошибка >
+# # 10−10)?
 print("Задание №9")
 
 def exact_sum(n):
-    return float(mpmath.fsum([1 / mpmath.mpf(k) for k in range(1, n + 1)]))
+    return mpmath.fsum([1 / mpmath.mpf(k) for k in range(1, n + 1)])
 
 num = [10**5, 10**6, 10**7]
 print(f"{'n':>10} | {'err_naive':>15} | {'err_sum':>10} | {'err_fsum':>10}")
@@ -282,22 +303,23 @@ for n in num:
     ex = exact_sum(n)
     
     if ex != 0:
-        err_naive = abs(naiv - ex) / abs(ex)
+        err_naive = float(abs(mpmath.mpf(str(naiv)) - ex) / abs(ex))
     else:
         err_naive = float('inf')
         
     if ex != 0:
-        err_st_sum = abs(st_sum - ex) / abs(ex)
+        err_st_sum = float(abs(mpmath.mpf(str(st_sum)) - ex) / abs(ex))
     else:
         err_st_sum = float('inf')
         
     if ex != 0:
-        err_fsum = abs(f_sum - ex) / abs(ex)
+        err_fsum = float(abs(mpmath.mpf(str(f_sum)) - ex) / abs(ex))
     else:
         err_fsum = float('inf')
 
     print(f"{n:>10} | {err_naive:>15.2e} | {err_st_sum:>10.2e} | {err_fsum:>10.2e}")
-    print("\nВывод:\nнаивная сумма становится неприемлемой при росте n  в 10 раз ошибка наивного способа тоже растет в 10 раз, следовательно растет линейно, степень = 1. Уже при n = 10⁷ наивная сумма даёт ошибку больше 10^-10 => пользоваться нельзя. Проблема в том, что  наивный цикл и sum() неустойчивы, большие слагаемые в начале подавляют маленькие в конце, из-за этого теряется точность. math.fsum() считает устойчиво - он компенсирует округления. ")
+
+print("\nВывод:\nнаивная сумма становится неприемлемой при росте n  в 10 раз ошибка наивного способа тоже растет в 10 раз, следовательно растет линейно, степень = 1. Уже при n = 10⁷ наивная сумма даёт ошибку больше 10^-10 => пользоваться нельзя. Проблема в том, что  наивный цикл и sum() неустойчивы, большие слагаемые в начале подавляют маленькие в конце, из-за этого теряется точность. math.fsum() считает устойчиво - он компенсирует округления. ")
 
 # Блок 3. Корректная постановка эксперимента (задачи 10–15)
 # Задача 10. Разделение источников ошибки.
@@ -309,13 +331,12 @@ for n in num:
 # (в) меняем алгоритм (плохой vs хороший), фиксируем x — видим эффект устойчивости.
 # Оформите таблицу: какой фактор на сколько порядков меняет ошибку. Сформулируйте вывод:
 # какой источник в каждом случае доминирует.
-from decimal import Decimal, getcontext
 
 print("Задание №10")
 def float32_emulation(val):
     if val == 0:
         return 0.0
-    order = int(math.floor(math.log10(abs(val))))
+    order = math.floor(math.log10(abs(val)))
     return round(val, -order + 6)
 exact_a1 = 0.4999999995833333  
 exact_a2 = 0.5 
@@ -383,13 +404,14 @@ def bad2(val):
     return (1.0 - math.cos(val) + 0.0)/(val**2)
 
 
-def exact(val):
-    x_mp = mpmath.mpf(val)
+def exact_11(val):
+    mpmath.mp.dps = 50
+    x_mp = mpmath.mpf(str(val))
     return (1 - mpmath.cos(x_mp)) / (x_mp**2)
 
 res1 = bad1(x)
 res2 = bad2(x)
-exact_val = float(exact(x))
+exact_val = float(exact_11(x))
 
 print(f"Результат алгоритма 1: {res1}")
 print(f"Результат алгоритма 2: {res2}")
@@ -410,24 +432,21 @@ print("\nВывод:\nСравнила float с float через == без эт�
 # предсказанием? Сформулируйте вывод о том, зачем нужен диапазон, а не одна точка.
 print("Задание №12")
 def bad_method(val):
-    return math.sqrt(val + 1.0)-math.sqrt(val)
+    return math.sqrt(val + 1.0) - math.sqrt(val)
 
 def exact_method(val):
-    x_mp = mpmath.mpf(str(val))
-    return float(mpmath.sqrt(x_mp + 1) - mpmath.sqrt(x_mp))
+    return 1.0 / (math.sqrt(val + 1.0) + math.sqrt(val))
 
 num = [10**i for i in range(2, 17, 2)]
 errors = []
 for x in num:
     res_bad = bad_method(x)
     res_exact = exact_method(x)
-    if res_exact != 0:
-        err = abs(res_bad - res_exact) / abs(res_exact)
-    else:
-        err = float('inf')
+    err = abs(res_bad - res_exact) / abs(res_exact)
     errors.append(err)
     print(f"{x:>10.0e} | {res_bad:>14.7e} | {res_exact:>14.7e} | {err:>10.2e}")
-differential_x =math.log10(num[5]) - math.log10(num[1]) 
+
+differential_x = math.log10(num[5]) - math.log10(num[1])
 differential_y = math.log10(errors[5]) - math.log10(errors[1])
 raz = differential_y / differential_x
 
@@ -437,57 +456,64 @@ print("\nВывод:\nнаклон прямой в log-log сетке почти
 
 # Задача 13. Воспроизводимость эксперимента.
 # Напишите эксперимент, который генерирует 105 случайных чисел через random.seed(42) и
-# numpy.random.default
-# _
-# rng(42). Суммируйте их тремя способами ( sum, math.fsum,
+# numpy.random.default_rng(42). Суммируйте их тремя способами ( sum, math.fsum,
 # numpy.sum). Запустите дважды с одним seed — результаты должны совпасть. Запустите с
 # seed=43 — покажите, что расхождения между способами не «случайны», а систематичны.
 # Оформите отчёт с указанием: версия Python, версия numpy, seed. Сделайте вывод о том, почему
 # без фиксации seed и версий эксперимент не воспроизводим.
-import random
 print("Задание №13")
+print(f"Отчёт: Python {sys.version.split()[0]}, NumPy {np.__version__}, seed = 42 и 43\n")
 
 random.seed(42)
 arr1 = [random.uniform(0.1, 1.0) for _ in range(100000)]
+rng1 = np.random.default_rng(42)
+arr1_np = rng1.uniform(0.1, 1.0, size=100000)
 
 sum_py1 = sum(arr1)
 sum_math1 = math.fsum(arr1)
+sum_np1 = float(np.sum(arr1_np))
 
 sum_loop1 = 0.0
 for val in arr1:
     sum_loop1 += val
 
 print("Результаты для seed=42 (Запуск 1):")
-print(f"  sum():    {sum_py1:.20f}\n  fsum():   {sum_math1:.20f}\n  цикл for: {sum_loop1:.20f}\n")
+print(f"  sum():    {sum_py1:.20f}\n  fsum():   {sum_math1:.20f}\n  цикл for: {sum_loop1:.20f}\n  np.sum(): {sum_np1:.20f}\n")
 
 random.seed(42)
 arr2 = [random.uniform(0.1, 1.0) for _ in range(100000)]
+rng2 = np.random.default_rng(42)
+arr2_np = rng2.uniform(0.1, 1.0, size=100000)
 
 sum_py2 = sum(arr2)
 sum_math2 = math.fsum(arr2)
+sum_np2 = float(np.sum(arr2_np))
 
 sum_loop2 = 0.0
 for val in arr2:
     sum_loop2 += val
 
 print("Результаты для seed=42 (Запуск 2):")
-print(f"sum(): {sum_py2:.20f} | fsum(): {sum_math2:.20f} | цикл: {sum_loop2:.20f}")
+print(f"sum(): {sum_py2:.20f} | fsum(): {sum_math2:.20f} | цикл: {sum_loop2:.20f} | np.sum(): {sum_np2:.20f}")
 
 random.seed(43)
 arr3 = [random.uniform(0.1, 1.0) for _ in range(100000)]
+rng3 = np.random.default_rng(43)
+arr3_np = rng3.uniform(0.1, 1.0, size=100000)
 
 sum_py3 = sum(arr3)
 sum_math3 = math.fsum(arr3)
+sum_np3 = float(np.sum(arr3_np))
 
 sum_loop3 = 0.0
 for val in arr3:
     sum_loop3 += val
 
 print("Результаты для seed=43:")
-print(f"sum(): {sum_py3:.20f} | fsum(): {sum_math3:.20f} | цикл: {sum_loop3:.20f}")
+print(f"sum(): {sum_py3:.20f} | fsum(): {sum_math3:.20f} | цикл: {sum_loop3:.20f} | np.sum(): {sum_np3:.20f}")
 
-print(f"Расхождение при seed=42 (sum - fsum): {sum_py1 - sum_math1:.2e}")
-print(f"Расхождение при seed=43 (sum - fsum): {sum_py3 - sum_math3:.2e}\n")
+print(f"Расхождение при seed=42 (sum - fsum): {sum_py1 - sum_math1:.2e} | (np.sum - fsum(np)): {sum_np1 - math.fsum(arr1_np.tolist()):.2e}")
+print(f"Расхождение при seed=43 (sum - fsum): {sum_py3 - sum_math3:.2e} | (np.sum - fsum(np)): {sum_np3 - math.fsum(arr3_np.tolist()):.2e}\n")
 
 print("\nВывод:\nовторные запуски с seed=42 дают идентичные результаты, что подтверждает детерминированность эксперимента. Смена seed на 43 сохраняет тот же порядок и направление расхождений между методами, подтверждая их систематический характер (обусловленный накоплением ошибок округления float), а не случайность. А вот если seed не фиксировать, генератор каждый раз выдаст разные данные; если не фиксировать версии Python — могут поменяться внутренние алгоритмы оптимизации суммирования встроенных функций. В обоих случаях эксперимент станет невоспроизводимым ")
 
@@ -509,12 +535,14 @@ zero = 0.0
 denorm = 1e-320
 inf = float('inf')
 nan = float('nan')
+
 test = {
-    "1. Большие + Маленькие (big + small)": [big, small, -big],
+    "1. Большие + Маленькие + 0": [big, small, zero, -big],
     "2. Денормализованные (denorm)": [denorm, denorm],
     "3. Наличие бесконечности (inf)": [big, inf, -big],
-    "4. Наличие NaN (nan)": [1.0, nan, 2.0]
+    "5. Наличие NaN (nan)": [1.0, nan, 2.0]
 }
+
 print(f"{'Тестовый набор':<38} | {'Наивная сумма':<15} | {'math.fsum()':<15}")
 for title, arr in test.items():
     s_naive = 0.0
@@ -522,7 +550,16 @@ for title, arr in test.items():
         s_naive += v
     s_fsum = math.fsum(arr)
     print(f"{title:<38} | {str(s_naive):<15} | {str(s_fsum):<15}")
-print("\nВывод:\n1. Сложение больших и маленьких чисел Обычное сложение может «потерять» маленькое число из-за особенностей вычислений и выдать 0.0 после вычитания. Функция math.fsum() сохраняет точность и выдаёт правильный результат (например, 1e-300).\n2. Очень маленькие числа (почти ноль): Очень маленькие числа (например, 1e-320) превращаются в ноль на уровне самого процессора. Поэтому и обычное сложение, и math.fsum() выдадут 0.0.\n3. Бесконечность (inf): Если в расчётах появляется бесконечность, обычное сложение «ломается» и в итоге может выдать «не число» (nan). Функция math.fsum() работает аккуратнее и корректно возвращает inf\n4. «Не число» (NaN): Если в данных есть NaN (например, от 0/0), то любая операция с ним даст NaN. Поэтому перед расчётами всегда нужно проверять данные функциями math.isnan() и math.isinf(), чтобы убрать некорректные значения.")
+
+
+print("\nВывод:\n1. Сложение больших и маленьких чисел Обычное сложение может «потерять» маленькое число из-за особенностей вычислений и выдать 0.0 после вычитания. Функция math.fsum() сохраняет точность и выдаёт правильный результат (например, 1e-300)." \
+"2. Очень маленькие числа (почти ноль): Очень маленькие числа (например, 1e-320) превращаются в ноль на уровне самого процессора. " \
+"Поэтому и обычное сложение, и " \
+"math.fsum() выдадут 0.0.\n3. Бесконечность (inf): Если в расчётах появляется бесконечность," \
+" обычное сложение «ломается» и в итоге может выдать «не число» (nan)." \
+" Функция math.fsum() работает аккуратнее и корректно возвращает inf\n4. «Не число» (NaN): Если в данных есть NaN (например, от 0/0), то любая операция с ним даст NaN. Поэтому перед расчётами всегда нужно проверять данные функциями math.isnan() и math.isinf(), " \
+"чтобы убрать некорректные значения.")
+
 # Задача 15. Полный корректный эксперимент.
 # Выберите одну функцию из задач 5–9 и проведите для неё полноценный эксперимент по
 # шаблону из лекции:
@@ -534,8 +571,10 @@ print("\nВывод:\n1. Сложение больших и маленьких �
 # 5. Вывод: где и почему алгоритм неустойчив, при каких входных данных он ещё пригоден,
 # какова достижимая точность.
 # Оформление — как мини-отчёт: цель, постановка, эталон, результаты, вывод. Это финальная
-# задача, показывающая, что вы умеете ставить численный эксперимент правильно.
+# # задача, показывающая, что вы умеете ставить численный эксперимент правильно.
 print("Задание №15")
+print("Цель: сравнить устойчивость прямой формулы и преобразования с сопряжённым выражением для f(x) = sqrt(x+1) - sqrt(x).")
+print("Постановка: диапазон x = 10^2..10^16 (8 точек), независимый эталон — Decimal с точностью 50 знаков.\n")
 getcontext().prec = 50
 def bad_algorithm(val):
     return math.sqrt(val + 1.0) - math.sqrt(val)
@@ -547,7 +586,7 @@ def exact_reference(val):
     dec_x = Decimal(str(val))
     return (dec_x + Decimal('1')).sqrt() - dec_x.sqrt()
 num_range = [10**i for i in range(2, 17, 2)]
-print(f"{'Вход x':<7} | {'Плохой'} | {'Хороший'} | {'Эталон'}")
+print(f"{'Вход x':<7} | {'Плохой':<12} | {'Хороший':<12} | {'Эталон':<12} | {'Ошибка плох.':<11} | {'Ошибка хор.'}")
 for i in num_range:
     res_bad = bad_algorithm(i)
     res_good = good_algorithm(i)
@@ -558,4 +597,4 @@ for i in num_range:
 
     print(f"{i:>7.0e} | {res_bad:<12.5e} | {res_good:<12.5e} | {float(res_exact):<12.5e} | {error_bad:<11.2e} | {error_good:.2e}")
 
-print("\nВывод:\n1.  Когда число 𝑥 становится очень большим (больше 10¹⁴), значения sqrt(x+1) и sqrt(x) настолько близки друг к другу, что компьютер начинает воспринимать их как одно и то же число. Если вычесть одно из другого, значащие цифры просто «стираются», и в результате получается неверный ответ. Это явление называется «потерей значимости при вычитании» (subtractive cancellation).\n2  Когда обычный способ перестаёт работать.\n- х<=10⁸ -результат ещё можно считать приемлемым (погрешность не превышает. 10^-8).\n- При 10¹⁴: ошибка становится огромной — около 11%.\n- При 10¹⁶: алгоритм полностью ломается и выдаёт 0 вместо правильного ответа, то есть ошибка составляет 100%.\n3. Достижимая точность: Если использовать улучшенную формулу (умножить и разделить на сопряжённое выражение), проблема исчезает. Вместо вычитания похожих чисел появляется сложение, которое не портит точность.\nТакой метод работает идеально на любых числах и сохраняет максимальную точность, возможную на компьютере")
+print("\nВывод:\n1.  Когда число 𝑥 становится очень большим (больше 10^14), значения sqrt(x+1) и sqrt(x) настолько близки друг к другу, что компьютер начинает воспринимать их как одно и то же число. Если вычесть одно из другого, значащие цифры просто «стираются», и в результате получается неверный ответ. Это явление называется «потерей значимости при вычитании» (subtractive cancellation).\n2  Когда обычный способ перестаёт работать.\n- х<=10⁸ -результат ещё можно считать приемлемым (погрешность не превышает. 10^-8).\n- При 10¹⁴: ошибка становится огромной — около 11%.\n- При 10¹⁶: алгоритм полностью ломается и выдаёт 0 вместо правильного ответа, то есть ошибка составляет 100%.\n3. Достижимая точность: Если использовать улучшенную формулу (умножить и разделить на сопряжённое выражение), проблема исчезает. Вместо вычитания похожих чисел появляется сложение, которое не портит точность.\nТакой метод работает идеально на любых числах и сохраняет максимальную точность, возможную на компьютере")
