@@ -1,3 +1,4 @@
+print("ДЗ 4")
 import time
 import numpy as np
 
